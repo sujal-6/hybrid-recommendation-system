@@ -1,4 +1,4 @@
-# Opportunity Recommendation System
+# Hybrid Recommendation System
 
 A hybrid recommendation engine combining **Collaborative Filtering** and **Content-Based Filtering** with vectorization analysis for recommending opportunities (jobs, internships, courses, grants, events, freelance gigs) to users.
 
@@ -361,12 +361,8 @@ Reload recommendation models (useful after data changes).
 
 ---
 
-## License
-
-This project is provided as-is for educational and research purposes.
-
----
-
 ## Contact & Support
 
 For issues, questions, or contributions, please refer to the project repository.
+
+---
