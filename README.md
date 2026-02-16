@@ -360,9 +360,3 @@ Reload recommendation models (useful after data changes).
 ```
 
 ---
-
-## Contact & Support
-
-For issues, questions, or contributions, please refer to the project repository.
-
----
