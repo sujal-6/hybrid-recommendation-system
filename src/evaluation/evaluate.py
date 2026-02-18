@@ -3,9 +3,7 @@ import sys
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-
 sys.path.append(os.path.abspath("."))
-
 from src.core.vectorizer import TfidfVectorizerModel
 from src.core.content import ContentRecommender
 from src.core.collaborative import ItemItemCollaborativeRecommender
@@ -19,11 +17,7 @@ from src.evaluation.metrics import (
     mrr
 )
 
-
 def get_ground_truth(df_test):
-    """
-    { user_id: set(item_indices) }
-    """
     truth = {}
     for uid, group in df_test.groupby("user_id"):
         items = set(group["item_idx"].tolist())
@@ -31,33 +25,26 @@ def get_ground_truth(df_test):
             truth[uid] = items
     return truth
 
-
 def run_evaluation(K=5):
-    print("🔹 Starting Evaluation")
-
+    print(" Starting Evaluation")
     seed_from_csv(db_path=DEFAULT_DB_PATH)
     opps = fetch_opportunities(DEFAULT_DB_PATH)
     opps = opps.fillna("")
-
     df = fetch_interactions(DEFAULT_DB_PATH)
     if df.empty:
-        print("No interactions found; cannot evaluate.")
+        print(" No interactions found; cannot evaluate.")
         return
 
     train_df, test_df = train_test_split(
         df, test_size=0.2, random_state=42
     )
 
-    # Skip users with insufficient history
     user_counts = train_df["user_id"].value_counts()
     valid_users = user_counts[user_counts >= 2].index
     train_df = train_df[train_df["user_id"].isin(valid_users)]
     test_df = test_df[test_df["user_id"].isin(valid_users)]
 
-    # -----------------------
     # CONTENT MODEL
-    # -----------------------
-    # Create a unified text field (same as API)
     for col in ["skills_required_json", "category", "location", "opportunity_type"]:
         if col not in opps.columns:
             opps[col] = ""
@@ -81,9 +68,7 @@ def run_evaluation(K=5):
     item_matrix = vectorizer.fit_transform(opps["full_text"].tolist())
     content_model = ContentRecommender(item_matrix)
 
-    # -----------------------
     # COLLABORATIVE MODEL
-    # -----------------------
     R_train, mappings = build_interaction_matrix(opportunities=opps, interactions=train_df)
     collab_model = ItemItemCollaborativeRecommender().fit(R_train) if R_train.shape[0] > 0 else ItemItemCollaborativeRecommender()
 
@@ -104,10 +89,7 @@ def run_evaluation(K=5):
         opportunities_by_idx=opps.to_dict(orient="records"),
     )
 
-    # -----------------------
     # EVALUATION
-    # -----------------------
-    # Map test interactions to item indices via mappings
     test_df = test_df.copy()
     test_df["item_idx"] = test_df["opportunity_id"].astype(int).map(mappings.opportunity_id_to_col)
     test_df = test_df.dropna()

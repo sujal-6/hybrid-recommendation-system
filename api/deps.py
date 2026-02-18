@@ -14,7 +14,6 @@ class ModelStore:
     recommender = None
     db_path = DEFAULT_DB_PATH
 
-
 def reset_models() -> None:
     ModelStore.opps = None
     ModelStore.vectorizer = None
@@ -24,21 +23,18 @@ def load_models():
     if ModelStore.recommender:
         return ModelStore
 
-    print("🔹 Loading models...")
+    print(" Loading models...")
 
-    # Seed SQLite from existing CSVs if empty
     seed_from_csv(db_path=ModelStore.db_path)
 
     opps = fetch_opportunities(ModelStore.db_path)
     if opps.empty:
         raise RuntimeError("No opportunities found. Add opportunities to the database first.")
 
-    # Ensure expected optional columns exist
     for col in ["skills_required_json", "category", "location", "opportunity_type"]:
         if col not in opps.columns:
             opps[col] = ""
 
-    # Build unified text field for CBF
     def _skills_text(v: str) -> str:
         try:
             arr = json.loads(v) if v else []
@@ -99,5 +95,5 @@ def load_models():
         opportunities_by_idx=opportunities_by_idx,
     )
 
-    print("✅ Models loaded")
+    print(" Models loaded")
     return ModelStore

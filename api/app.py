@@ -37,7 +37,6 @@ def create_user(payload: UserCreate):
     )
     return {"status": "OK", "user_id": payload.user_id}
 
-
 @app.post("/opportunities")
 def create_opportunity(payload: OpportunityCreate):
     insert_opportunity(
@@ -50,9 +49,7 @@ def create_opportunity(payload: OpportunityCreate):
         location=payload.location,
         opportunity_type=payload.opportunity_type,
     )
-    # ModelStore is cached; simplest MVP approach: restart API to pick up changes
     return {"status": "OK", "opportunity_id": payload.opportunity_id, "note": "Restart API to refresh models."}
-
 
 @app.post("/interactions")
 def create_interaction(payload: InteractionCreate):
@@ -64,7 +61,6 @@ def create_interaction(payload: InteractionCreate):
         weight=payload.weight,
     )
     return {"status": "OK"}
-
 
 @app.post("/recommend", response_model=RecommendResponse)
 def recommend(req: RecommendRequest, store=Depends(load_models)):
@@ -86,3 +82,5 @@ def recommend(req: RecommendRequest, store=Depends(load_models)):
         )
 
     return RecommendResponse(results=results)
+
+

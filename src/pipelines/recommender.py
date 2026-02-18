@@ -1,15 +1,11 @@
 from __future__ import annotations
-
 import json
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Sequence, Tuple
-
 import numpy as np
 from scipy.sparse import csr_matrix
-
 from src.core.hybrid import weighted_hybrid
 from src.data.matrices import InteractionMappings
-
 
 @dataclass
 class Recommendation:
@@ -17,15 +13,8 @@ class Recommendation:
     score: float
     reason: str
 
-
 class HybridRecommender:
-    """
-    Hybrid recommender:
-    - Content-based (TF-IDF cosine) from query OR user profile OR user history centroid
-    - Item-item collaborative filtering (implicit) from interaction matrix
-    - Weighted combination with min-max score normalization
-    """
-
+    # Hybrid recommender:
     def __init__(
         self,
         *,
@@ -55,7 +44,6 @@ class HybridRecommender:
         if query and query.strip():
             return self.vectorizer.transform([query])
 
-        # cold-start: use user profile text if available
         if user_id is not None:
             u = self.users_by_id.get(int(user_id))
             if u:
@@ -63,14 +51,12 @@ class HybridRecommender:
                 if profile_text:
                     return self.vectorizer.transform([profile_text])
 
-        # fallback: user history centroid in vector space
         if user_row is not None and user_row >= 0:
             row = self.R.getrow(user_row)
             if row.nnz > 0:
                 idx = row.indices
                 w = row.data.astype("float32")
 
-                # item_matrix can be sparse (TF-IDF) or dense
                 if hasattr(self.item_matrix, "tocsr"):
                     mat = self.item_matrix[idx]
                     # weighted sum -> (1, dim)
@@ -81,7 +67,6 @@ class HybridRecommender:
                 centroid = (mat * w.reshape(-1, 1)).mean(axis=0, keepdims=True)
                 return centroid
 
-        # no content signal
         return None
 
     def recommend(
@@ -113,7 +98,7 @@ class HybridRecommender:
             idx, sc = self.collab.recommend(user_row, self.R, k=k * 4, exclude_seen=True)
             cf_dict = dict(zip(idx, sc))
 
-        # Fallback: popularity if both empty (true cold start + no query)
+        # Fallback
         if not c_dict and not cf_dict:
             if self.R.nnz == 0:
                 return []

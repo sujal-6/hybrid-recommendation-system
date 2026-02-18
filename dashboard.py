@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 
 st.set_page_config("Opportunity Recommender", layout="wide")
-st.title("🚀 Opportunity Recommendation System")
+st.title(" Opportunity Recommendation System")
 
 API_BASE = "http://127.0.0.1:8000"
 
@@ -15,7 +15,7 @@ if page == "Recommendations":
     col1, col2 = st.columns(2)
     
     with col1:
-        query = st.text_input("🔍 Search Query (optional)", placeholder="e.g., 'Python developer', 'data science'")
+        query = st.text_input(" Search Query (optional)", placeholder="e.g., 'Python developer', 'data science'")
         user_id = st.number_input("User ID (optional)", min_value=0, step=1, value=0)
         k = st.slider("Number of Recommendations", 1, 20, 5)
     
@@ -54,7 +54,7 @@ if page == "Recommendations":
             else:
                 st.error(f"API Error: {resp.status_code} - {resp.text}")
         except requests.exceptions.ConnectionError:
-            st.error("❌ Cannot connect to API. Make sure the FastAPI server is running on http://127.0.0.1:8000")
+            st.error(" Cannot connect to API. Make sure the FastAPI server is running on http://127.0.0.1:8000")
         except Exception as e:
             st.error(f"Error: {e}")
 
@@ -95,7 +95,7 @@ elif page == "Add Opportunity":
                 try:
                     resp = requests.post(f"{API_BASE}/opportunities", json=payload)
                     if resp.status_code == 200:
-                        st.success(f"✅ Opportunity {opp_id} added! Note: Restart API or call /reload to refresh models.")
+                        st.success(f" Opportunity {opp_id} added! Note: Restart API or call /reload to refresh models.")
                     else:
                         st.error(f"Error: {resp.status_code} - {resp.text}")
                 except Exception as e:
@@ -125,7 +125,7 @@ elif page == "Add User":
             try:
                 resp = requests.post(f"{API_BASE}/users", json=payload)
                 if resp.status_code == 200:
-                    st.success(f"✅ User {user_id} created!")
+                    st.success(f" User {user_id} created!")
                 else:
                     st.error(f"Error: {resp.status_code} - {resp.text}")
             except Exception as e:
@@ -153,9 +153,10 @@ elif page == "Record Interaction":
             try:
                 resp = requests.post(f"{API_BASE}/interactions", json=payload)
                 if resp.status_code == 200:
-                    st.success("✅ Interaction recorded! Note: Restart API or call /reload to refresh models.")
+                    st.success(" Interaction recorded! Note: Restart API or call /reload to refresh models.")
                 else:
                     st.error(f"Error: {resp.status_code} - {resp.text}")
             except Exception as e:
                 st.error(f"Error: {e}")
+
 

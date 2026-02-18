@@ -10,27 +10,16 @@ from scipy.sparse import csr_matrix
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-
 def basic_preprocess(text: str) -> str:
-    """
-    Lightweight, dependency-free preprocessing:
-    - lowercase
-    - strip URLs
-    - keep only letters/numbers/spaces
-    - collapse whitespace
 
-    Note: Lemmatization is intentionally optional (see NltkLemmatizer).
-    """
     text = (text or "").lower()
     text = re.sub(r"https?://\S+|www\.\S+", " ", text)
     text = re.sub(r"[^a-z0-9\s]+", " ", text)
     text = re.sub(r"\s+", " ", text).strip()
     return text
 
-
 class TextNormalizer(Protocol):
     def __call__(self, text: str) -> str: ...
-
 
 class Vectorizer(ABC):
     @abstractmethod
@@ -41,13 +30,8 @@ class Vectorizer(ABC):
     def transform(self, texts: Sequence[str]) -> Union[csr_matrix, np.ndarray]:
         raise NotImplementedError
 
-
 class TfidfVectorizerModel(Vectorizer):
-    """
-    Primary vectorization for CBF (spec): TF-IDF.
-    Returns a sparse CSR matrix to keep memory usage low.
-    """
-
+    # Primary vectorization for CBF (spec): TF-IDF.
     def __init__(
         self,
         *,
@@ -81,11 +65,7 @@ class TfidfVectorizerModel(Vectorizer):
 
 
 class TfidfSvdVectorizerModel(Vectorizer):
-    """
-    Secondary (analysis): TF-IDF + TruncatedSVD.
-    Produces dense vectors for comparison / reporting.
-    """
-
+    # Secondary (analysis): TF-IDF + TruncatedSVD.
     def __init__(
         self,
         *,
@@ -104,7 +84,6 @@ class TfidfSvdVectorizerModel(Vectorizer):
 
     def fit_transform(self, corpus: Sequence[str]) -> np.ndarray:
         X = self._tfidf.fit_transform(list(corpus))
-        # Handle tiny datasets gracefully
         n_samples, n_features = X.shape
         if n_samples <= 2 or n_features <= self._svd.n_components:
             vec = X.toarray().astype("float32")
@@ -124,12 +103,7 @@ class TfidfSvdVectorizerModel(Vectorizer):
 
 
 class SbertVectorizerModel(Vectorizer):
-    """
-    Secondary (analysis): SBERT embeddings.
-    Implemented as an optional dependency; if sentence-transformers is missing,
-    this vectorizer will raise with a clear error message.
-    """
-
+    # Secondary (analysis): SBERT embeddings.
     def __init__(self, model_name: str = "all-MiniLM-L6-v2") -> None:
         self.model_name = model_name
         self._model = None
@@ -137,8 +111,8 @@ class SbertVectorizerModel(Vectorizer):
     def _get_model(self):
         if self._model is None:
             try:
-                from sentence_transformers import SentenceTransformer  # type: ignore
-            except Exception as e:  # pragma: no cover
+                from sentence_transformers import SentenceTransformer 
+            except Exception as e:
                 raise RuntimeError(
                     "SBERT vectorizer requires `sentence-transformers` to be installed."
                 ) from e

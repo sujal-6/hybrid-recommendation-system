@@ -6,7 +6,6 @@ def normalize(scores):
         return {k: 1.0 for k in scores}
     return {k: (v - min_s) / (max_s - min_s) for k, v in scores.items()}
 
-
 def weighted_hybrid(content, collab, alpha=0.5):
     c = normalize(content)
     cf = normalize(collab)

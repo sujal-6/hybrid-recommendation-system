@@ -1,28 +1,17 @@
-"""
-Vectorization Comparison Script
-
-Compares different vectorization techniques (TF-IDF, TF-IDF+SVD, SBERT)
-on content-based recommendation performance.
-"""
-
 import json
 import os
 import sys
 from dataclasses import dataclass
 from typing import Dict, List, Optional
-
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-
 sys.path.append(os.path.abspath("."))
-
 from src.core.content import ContentRecommender
 from src.core.vectorizer import SbertVectorizerModel, TfidfSvdVectorizerModel, TfidfVectorizerModel
 from src.data.db import DEFAULT_DB_PATH, fetch_interactions, fetch_opportunities, seed_from_csv
 from src.data.matrices import build_interaction_matrix
 from src.evaluation.metrics import f1_score_at_k, ndcg, precision_at_k, recall_at_k
-
 
 @dataclass
 class VectorizationResult:
@@ -31,7 +20,6 @@ class VectorizationResult:
     recall: float
     f1: float
     ndcg: float
-
 
 def evaluate_vectorizer(
     vectorizer_name: str,
@@ -42,10 +30,7 @@ def evaluate_vectorizer(
     mappings,
     K: int = 5,
 ) -> VectorizationResult:
-    """Evaluate a single vectorization technique"""
     print(f"  Evaluating {vectorizer_name}...")
-
-    # Build text field
     opps = opportunities.copy()
     for col in ["skills_required_json", "category", "location", "opportunity_type"]:
         if col not in opps.columns:
@@ -65,11 +50,10 @@ def evaluate_vectorizer(
         + opps["opportunity_type"].astype(str)
     ).fillna("")
 
-    # Fit vectorizer
+    # Vectorizer
     item_matrix = vectorizer.fit_transform(opps["full_text"].tolist())
     content_model = ContentRecommender(item_matrix)
 
-    # Build ground truth
     test_df = test_interactions.copy()
     test_df["item_idx"] = test_df["opportunity_id"].astype(int).map(mappings.opportunity_id_to_col)
     test_df = test_df.dropna()
@@ -80,12 +64,9 @@ def evaluate_vectorizer(
         items = set(group["item_idx"].tolist())
         if items:
             ground_truth[int(uid)] = items
-
-    # Evaluate per user
     metrics = {"p": [], "r": [], "f1": [], "ndcg": []}
 
     for uid, relevant in ground_truth.items():
-        # Build user profile from training history
         user_train = train_interactions[train_interactions["user_id"] == uid]
         if user_train.empty:
             continue
@@ -95,12 +76,9 @@ def evaluate_vectorizer(
         user_train = user_train.dropna()
         if user_train.empty:
             continue
-
         history_idx = user_train["item_idx"].astype(int).tolist()
         if not history_idx:
             continue
-
-        # Build query vector as mean of history items
         if hasattr(item_matrix, "tocsr"):
             # Sparse matrix
             mat = item_matrix[history_idx]
@@ -130,9 +108,8 @@ def evaluate_vectorizer(
         ndcg=np.mean(metrics["ndcg"]),
     )
 
-
 def generate_html_report(results: List[VectorizationResult], output_path: str, K: int = 5) -> None:
-    """Generate HTML report for vectorization comparison"""
+    # HTML report for vectorization comparison
     html = f"""<!DOCTYPE html>
 <html>
 <head>
@@ -182,7 +159,7 @@ def generate_html_report(results: List[VectorizationResult], output_path: str, K
                 </tr>
 """
 
-    # Find best performer
+    # Best performer
     best = max(results, key=lambda x: x.f1)
     html += f"""
             </tbody>
@@ -218,12 +195,12 @@ def run_comparison(K: int = 5, output_path: Optional[str] = None) -> List[Vector
     seed_from_csv(db_path=DEFAULT_DB_PATH)
     opps = fetch_opportunities(DEFAULT_DB_PATH)
     if opps.empty:
-        print("❌ No opportunities found")
+        print(" No opportunities found")
         return []
 
     interactions = fetch_interactions(DEFAULT_DB_PATH)
     if interactions.empty:
-        print("❌ No interactions found")
+        print(" No interactions found")
         return []
 
     # Train/test split
@@ -241,9 +218,9 @@ def run_comparison(K: int = 5, output_path: Optional[str] = None) -> List[Vector
         tfidf_vec = TfidfVectorizerModel()
         result = evaluate_vectorizer("TF-IDF", tfidf_vec, opps, train_df, test_df, mappings, K)
         results.append(result)
-        print(f"   Precision@{K}: {result.precision:.4f}, Recall@{K}: {result.recall:.4f}, F1: {result.f1:.4f}")
+        print(f" Precision@{K}: {result.precision:.4f}, Recall@{K}: {result.recall:.4f}, F1: {result.f1:.4f}")
     except Exception as e:
-        print(f"   ❌ Error: {e}")
+        print(f" Error: {e}")
 
     # 2. TF-IDF + SVD
     print("\n2. TF-IDF + SVD Vectorizer")
@@ -251,9 +228,9 @@ def run_comparison(K: int = 5, output_path: Optional[str] = None) -> List[Vector
         tfidf_svd_vec = TfidfSvdVectorizerModel(n_components=128)
         result = evaluate_vectorizer("TF-IDF+SVD", tfidf_svd_vec, opps, train_df, test_df, mappings, K)
         results.append(result)
-        print(f"   Precision@{K}: {result.precision:.4f}, Recall@{K}: {result.recall:.4f}, F1: {result.f1:.4f}")
+        print(f" Precision@{K}: {result.precision:.4f}, Recall@{K}: {result.recall:.4f}, F1: {result.f1:.4f}")
     except Exception as e:
-        print(f"   ❌ Error: {e}")
+        print(f" Error: {e}")
 
     # 3. SBERT (optional, analysis only)
     print("\n3. SBERT Vectorizer (optional)")
@@ -261,22 +238,21 @@ def run_comparison(K: int = 5, output_path: Optional[str] = None) -> List[Vector
         sbert_vec = SbertVectorizerModel()
         result = evaluate_vectorizer("SBERT", sbert_vec, opps, train_df, test_df, mappings, K)
         results.append(result)
-        print(f"   Precision@{K}: {result.precision:.4f}, Recall@{K}: {result.recall:.4f}, F1: {result.f1:.4f}")
+        print(f" Precision@{K}: {result.precision:.4f}, Recall@{K}: {result.recall:.4f}, F1: {result.f1:.4f}")
     except Exception as e:
-        print(f"   ⚠️  SBERT not available (requires sentence-transformers): {e}")
+        print(f" SBERT not available (requires sentence-transformers): {e}")
 
-    # Generate report
+    # Report
     if output_path is None:
         output_path = os.path.join("reports", "vectorization_report.html")
 
     if results:
         generate_html_report(results, output_path, K)
-        print(f"\n✅ Comparison complete. Results:")
+        print(f"\nComparison complete. Results:")
         for r in results:
             print(f"   {r.name}: F1={r.f1:.4f}, NDCG={r.ndcg:.4f}")
 
     return results
-
 
 if __name__ == "__main__":
     run_comparison(K=5)

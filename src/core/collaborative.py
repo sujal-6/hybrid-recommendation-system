@@ -10,15 +10,7 @@ from sklearn.preprocessing import normalize
 
 @dataclass
 class ItemItemCollaborativeRecommender:
-    """
-    Item-based collaborative filtering for implicit feedback (spec).
-
-    Training builds normalized item profiles from the user-item matrix R:
-      item_profiles = normalize(R.T)
-
-    Scoring for a user sums cosine similarities from the user's interacted items
-    to all items (optionally weighted by interaction strength).
-    """
+    # Item-based collaborative filtering for implicit feedback (spec).
 
     item_profiles: Optional[csr_matrix] = None
 
@@ -48,10 +40,10 @@ class ItemItemCollaborativeRecommender:
         if history_items.size == 0:
             return [], []
 
-        # Similarities from each history item to all items: (lenH, n_items)
+        # Similarities : (lenH, n_items)
         sims = self.item_profiles[history_items].dot(self.item_profiles.T)  # sparse
 
-        # Weight each history row by interaction strength, then sum to a single score vector
+        # Weight
         if history_w.size:
             sims = sims.multiply(history_w.reshape(-1, 1))
         scores = np.asarray(sims.sum(axis=0)).ravel().astype("float32")

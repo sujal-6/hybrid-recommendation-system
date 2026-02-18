@@ -8,14 +8,12 @@ class RecommendRequest(BaseModel):
     alpha: float = 0.5
     include_reasons: bool = True
 
-
 class UserCreate(BaseModel):
     user_id: int
     skills: List[str] = []
     interests: List[str] = []
     experience: str = ""
     profile_text: str = ""
-
 
 class OpportunityCreate(BaseModel):
     opportunity_id: int
@@ -25,7 +23,6 @@ class OpportunityCreate(BaseModel):
     category: str = ""
     location: str = ""
     opportunity_type: str = ""
-
 
 class InteractionCreate(BaseModel):
     user_id: int

@@ -1,21 +1,15 @@
 from __future__ import annotations
-
 import json
 import os
 import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Iterable, Optional
-
 import pandas as pd
-
-
 DEFAULT_DB_PATH = os.path.join("data", "app.db")
-
 
 def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
-
 
 def get_conn(db_path: str = DEFAULT_DB_PATH) -> sqlite3.Connection:
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
@@ -74,9 +68,7 @@ def seed_from_csv(
     opportunities_csv: str = os.path.join("data", "opportunities.csv"),
     interactions_csv: str = os.path.join("data", "interactions.csv"),
 ) -> None:
-    """
-    Idempotent seeding: only seeds if target tables are empty.
-    """
+    
     init_db(db_path)
 
     with get_conn(db_path) as conn:
@@ -107,7 +99,6 @@ def seed_from_csv(
         inter_count = conn.execute("SELECT COUNT(1) AS c FROM interactions").fetchone()["c"]
         if inter_count == 0 and os.path.exists(interactions_csv):
             inter = pd.read_csv(interactions_csv).fillna("")
-            # Ensure referenced users exist
             if "user_id" in inter.columns:
                 for uid in sorted(set(inter["user_id"].astype(int).tolist())):
                     conn.execute(
@@ -130,7 +121,6 @@ def seed_from_csv(
                     """,
                     (uid, oid, "implicit", weight, _utc_now_iso()),
                 )
-
 
 def fetch_df(db_path: str, query: str, params: tuple[Any, ...] = ()) -> pd.DataFrame:
     with get_conn(db_path) as conn:
@@ -207,7 +197,6 @@ def upsert_user(
             ),
         )
 
-
 def insert_opportunity(
     *,
     db_path: str = DEFAULT_DB_PATH,
@@ -240,7 +229,6 @@ def insert_opportunity(
             ),
         )
 
-
 def insert_interaction(
     *,
     db_path: str = DEFAULT_DB_PATH,
@@ -252,7 +240,6 @@ def insert_interaction(
 ) -> None:
     init_db(db_path)
     with get_conn(db_path) as conn:
-        # ensure user exists
         conn.execute(
             """
             INSERT OR IGNORE INTO users (user_id, skills_json, interests_json, experience, profile_text, created_at)

@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 from scipy.sparse import csr_matrix
 
-
 @dataclass(frozen=True)
 class InteractionMappings:
     user_id_to_row: Dict[int, int]
@@ -15,19 +14,12 @@ class InteractionMappings:
     opportunity_id_to_col: Dict[int, int]
     col_to_opportunity_id: Dict[int, int]
 
-
 def build_interaction_matrix(
     *,
     opportunities: pd.DataFrame,
     interactions: pd.DataFrame,
 ) -> Tuple[csr_matrix, InteractionMappings]:
-    """
-    Builds a CSR user-item matrix R from interactions.
-
-    - rows: mapped user indices (0..n_users-1)
-    - cols: opportunity indices based on `opportunities` ordering
-    - data: interaction weight (implicit feedback)
-    """
+    # CSR user-item matrix R from interactions.
     opp_ids = opportunities["opportunity_id"].astype(int).tolist()
     opportunity_id_to_col = {oid: i for i, oid in enumerate(opp_ids)}
     col_to_opportunity_id = {i: oid for oid, i in opportunity_id_to_col.items()}
@@ -36,7 +28,7 @@ def build_interaction_matrix(
         mappings = InteractionMappings({}, {}, opportunity_id_to_col, col_to_opportunity_id)
         return csr_matrix((0, len(opp_ids))), mappings
 
-    # keep only known opportunities
+    # known opportunities
     interactions = interactions.copy()
     interactions["opportunity_id"] = interactions["opportunity_id"].astype(int)
     interactions = interactions[interactions["opportunity_id"].isin(opportunity_id_to_col)]
@@ -52,4 +44,3 @@ def build_interaction_matrix(
     R = csr_matrix((data, (rows, cols)), shape=(len(user_ids), len(opp_ids)))
     mappings = InteractionMappings(user_id_to_row, row_to_user_id, opportunity_id_to_col, col_to_opportunity_id)
     return R, mappings
-
